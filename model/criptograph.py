@@ -1,13 +1,12 @@
 import base64
 from stegano import lsb
 from cryptography.fernet import Fernet
-
-chave = Fernet.generate_key()
+from PIL import Image
+import io
 
 class Criptograph():
     def criptgraph_file(self, file64: bytes):        
         key = Fernet.generate_key()
-        print(key.__str__)
         fernet = Fernet(key)
         
         oFileCriptgraph = fernet.encrypt(base64.b64decode(file64))
@@ -25,9 +24,19 @@ class Criptograph():
  
 
     def steganography_file(self, file64: bytes, sMessage: str):
-        oFileSecret = lsb.hide(base64.b64decode(file64), sMessage)
-        return base64.b64encode(oFileSecret.save())
+        file = base64.b64decode(file64)
+        image = Image.open(io.BytesIO(file))
+        oFileSecret = lsb.hide(image=image, message=sMessage)
+        buffer = io.BytesIO()
+        oFileSecret.save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue())
 
     def steganography_reveal(self, file64: bytes):
-        sMessageSecret = lsb.reveal(base64.b64decode(file64))
+        #missing_padding = len(file64) % 4
+        ##   file64 += b'=' * (4 - missing_padding)
+        
+        # Decodificar o arquivo base64
+        file = base64.b64decode(file64)
+        image = Image.open(io.BytesIO(file))
+        sMessageSecret = lsb.reveal(image)
         return sMessageSecret
